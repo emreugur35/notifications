@@ -48,7 +48,7 @@ A queue-backed, multi-channel (SMS / email / push) notification delivery service
 
 **Request → delivery flow**
 
-1. The API validates the payload (per-channel content rules), persists a `Notification` (`pending`), transitions it to `queued`, and dispatches `SendNotification` onto the queue for its priority.
+1. The API validates the payload (per-channel content rules) and persists a `Notification` (`pending`). If it's due now (no `scheduled_at`, or already elapsed) it transitions to `queued` and dispatches `SendNotification` onto the queue for its priority; a future `scheduled_at` keeps it `pending` until the per-minute scheduler releases it (see [Scheduled notifications](#scheduled-notifications)).
 2. Horizon's single supervisor drains `high → normal → low` in **strict priority order**.
 3. Before running, the job passes two middleware: the **circuit breaker** (releases without consuming the retry budget if the channel is open) and the **rate limiter** (≤100 msg/s per channel).
 4. The job calls the **provider**, which owns success/failure classification. Success → `sent` + `provider_message_id`; transient → re-throw (retry with backoff); permanent → fail fast to `failed_jobs`.
@@ -59,8 +59,9 @@ A queue-backed, multi-channel (SMS / email / push) notification delivery service
 | Concern | Where |
 |---|---|
 | API (controllers, FormRequests, resources) | `app/Http/` |
-| Domain models + enums | `app/Models/`, `app/Enums/` |
+| models + enums | `app/Models/`, `app/Enums/` |
 | Orchestration | `app/Services/NotificationService.php` |
+| Scheduled dispatch (every minute) | `app/Console/Commands/DispatchScheduledNotifications.php`, `routes/console.php` |
 | Delivery job | `app/Jobs/SendNotification.php` (+ `app/Jobs/Middleware/`) |
 | Provider + classification | `app/Delivery/` (`NotificationProvider`, `WebhookSiteProvider`, `ProviderResult`, exceptions) |
 | Circuit breaker | `app/Delivery/CircuitBreaker.php` |
@@ -214,6 +215,28 @@ Full request/response schemas, query params, and a downloadable OpenAPI spec / P
 
 ---
 
+## Scheduled notifications
+
+Set `scheduled_at` (ISO-8601) to defer delivery. A notification with a **future** `scheduled_at` is persisted as `pending` and is **not** dispatched on create; one with no `scheduled_at` (or a time already past) is dispatched immediately.
+
+```bash
+curl -s -X POST http://localhost:8000/api/v1/notifications \
+  -H 'Content-Type: application/json' -H 'Accept: application/json' \
+  -d '{"recipient":"+15551234567","channel":"sms","content":"Reminder","scheduled_at":"2026-12-25T09:00:00Z"}' | jq
+# => { "data": { "status": "pending", "scheduled_at": "2026-12-25T09:00:00+00:00" }, ... }
+```
+
+The **scheduler** container runs `php artisan schedule:work`, which fires `notifications:dispatch-scheduled` **every minute**. That command transitions any `pending` notification whose `scheduled_at` is now due to `queued` and dispatches it — so delivery happens within ~1 minute of the scheduled time. The same applies per-item in a batch: future-dated items stay `pending` while the rest are dispatched immediately.
+
+```bash
+docker compose exec app php artisan notifications:dispatch-scheduled   # "Dispatched N due notification(s)."
+docker compose exec app php artisan schedule:list                      # shows the * * * * * entry
+```
+
+> Granularity is ~1 minute (the scheduler tick). The command uses `withoutOverlapping()`, and the delivery job's idempotency lock guards against double-dispatch.
+
+---
+
 ## webhook.site configuration
 
 The default delivery provider POSTs `{ to, channel, content }` to `WEBHOOK_URL` and treats **any 2xx response carrying a `messageId`** as a success. webhook.site's *default* response is a token-less 404 (or a 2xx without a `messageId`), which the provider correctly classifies as a **permanent failure** — so out of the box you'll see notifications go to `failed`.
@@ -256,7 +279,7 @@ docker compose exec app composer test
 
 **Coverage map**
 
-- **Feature** — API CRUD, batch `>1000` rejection, cancel state rules (`409`), idempotency dedup, rate-limit middleware enforcement, retry → failed terminal, health (`200`/`503`), metrics, correlation-id propagation, circuit breaker + provider classification, end-to-end delivery.
+- **Feature** — API CRUD, batch `>1000` rejection, cancel state rules (`409`), idempotency dedup, rate-limit middleware enforcement, retry → failed terminal, scheduled dispatch (deferred until due), health (`200`/`503`), metrics, correlation-id propagation, circuit breaker + provider classification, end-to-end delivery.
 - **Unit** — content validators, SMS segmenter, backoff calculator.
 
 A `notifications:load-test` artisan command drives the live stack to verify ≤100/s rate limiting, strict priority draining, and idempotency under burst:
