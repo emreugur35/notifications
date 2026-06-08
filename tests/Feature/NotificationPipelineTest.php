@@ -9,6 +9,7 @@ use App\Models\Notification;
 use App\Support\Idempotency\IdempotencyLock;
 use App\Support\RateLimiting\ChannelRateLimiter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
@@ -20,6 +21,8 @@ beforeEach(function () {
 });
 
 it('sends a notification exactly once even when dispatched twice', function () {
+    Http::fake(['*' => Http::response(['messageId' => 'once-1'], 200)]);
+
     $notification = Notification::factory()
         ->forChannel(Channel::Sms)
         ->withStatus(Status::Queued)
@@ -32,7 +35,7 @@ it('sends a notification exactly once even when dispatched twice', function () {
 
     expect($notification->status)->toBe(Status::Sent)
         ->and($notification->attempts)->toBe(1)
-        ->and($notification->provider_message_id)->not->toBeNull()
+        ->and($notification->provider_message_id)->toBe('once-1')
         ->and($notification->deliveryAttempts()->count())->toBe(1);
 });
 
