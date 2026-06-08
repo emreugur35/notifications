@@ -1,12 +1,17 @@
+# Shared build config: all PHP services build the same `dev` image. Compose
+# builds the notifications-app:dev tag once and reuses it for every service
+# that references this anchor — so no service ever tries to pull it.
+x-app-build: &app-build
+  context: .
+  dockerfile: Dockerfile
+  target: dev
+  args:
+    UID: ${UID:-1000}
+    GID: ${GID:-1000}
+
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: dev
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
+    build: *app-build
     image: notifications-app:dev
     restart: unless-stopped
     working_dir: /var/www/html
@@ -71,6 +76,7 @@ services:
       - notifications
 
   horizon:
+    build: *app-build
     image: notifications-app:dev
     restart: unless-stopped
     working_dir: /var/www/html
@@ -91,6 +97,7 @@ services:
       - notifications
 
   scheduler:
+    build: *app-build
     image: notifications-app:dev
     restart: unless-stopped
     working_dir: /var/www/html

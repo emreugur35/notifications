@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+
+    paths:
+        - app
+        - domain
+        - database
+        - routes
+
+    # Larastan needs the app bootstrapped to resolve container types.
+    bootstrapFiles:
+        - bootstrap/app.php

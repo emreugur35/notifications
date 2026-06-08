@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Notifications\Services;
 
-use Domain\Notifications\Enums\NotificationChannel;
+use Domain\Notifications\Enums\Channel;
 
 /**
  * Entry point for dispatching notifications onto the appropriate queue.
@@ -16,7 +16,7 @@ class NotificationDispatcher
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function dispatch(NotificationChannel $channel, array $payload): void
+    public function dispatch(Channel $channel, array $payload): void
     {
         // TODO: persist a Notification record and push the matching Job
         //       onto $channel->queue().
