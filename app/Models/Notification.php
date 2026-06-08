@@ -41,6 +41,19 @@ class Notification extends Model
 
     use HasUuids;
 
+    protected $fillable = [
+        'status',
+        'priority',
+        'content',
+        'channel',
+        'recipient',
+        'batch_id',
+        'idempotency_key',
+        'scheduled_at',
+        'attempts',
+        'metadata',
+    ];
+
     /** @var list<string> */
     protected $guarded = [];
 

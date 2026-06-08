@@ -12,6 +12,7 @@ use App\Models\NotificationBatch;
 use App\Support\Content\ContentValidator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class NotificationService
@@ -56,9 +57,17 @@ class NotificationService
             'metadata' => $this->buildMetadata($data, $contentMeta),
         ]);
 
-        // pending -> queued, then dispatch onto the priority queue.
-        $notification->update(['status' => Status::Queued]);
-        SendNotification::dispatch($notification);
+        // Due now (no schedule, or already elapsed): queue + dispatch.
+        // Future-scheduled: stay pending until the scheduler picks it up.
+        if ($this->isDue($notification)) {
+            $this->markQueuedAndDispatch($notification);
+        } else {
+            Log::info('notification.scheduled', [
+                'notification_id' => $notification->id,
+                'channel' => $channel->value,
+                'scheduled_at' => $notification->scheduled_at?->toIso8601String(),
+            ]);
+        }
 
         return $notification;
     }
@@ -110,18 +119,75 @@ class NotificationService
             return $batch;
         });
 
-        // pending -> queued, then dispatch a job per notification (post-commit).
-        Notification::query()
+        // Dispatch only the notifications that are due now; future-scheduled
+        // ones stay pending until the scheduler picks them up (post-commit).
+        $dueIds = Notification::query()
             ->where('batch_id', $batch->id)
-            ->update(['status' => Status::Queued->value]);
+            ->where(function ($query): void {
+                $query->whereNull('scheduled_at')->orWhere('scheduled_at', '<=', now());
+            })
+            ->pluck('id');
 
-        Notification::query()
-            ->where('batch_id', $batch->id)
-            ->each(function (Notification $notification): void {
-                SendNotification::dispatch($notification);
-            });
+        Notification::query()->whereIn('id', $dueIds)->update(['status' => Status::Queued->value]);
+
+        Notification::query()->whereIn('id', $dueIds)->each(function (Notification $notification): void {
+            SendNotification::dispatch($notification);
+        });
+
+        Log::info('notification.batch_queued', [
+            'batch_id' => $batch->id,
+            'dispatched' => $dueIds->count(),
+            'total' => $batch->total_count,
+        ]);
 
         return $batch;
+    }
+
+    /**
+     * Dispatch pending notifications whose scheduled_at has come due. Invoked
+     * every minute by the scheduler (schedule:work).
+     */
+    public function dispatchDue(): int
+    {
+        $dispatched = 0;
+
+        Notification::query()
+            ->where('status', Status::Pending->value)
+            ->whereNotNull('scheduled_at')
+            ->where('scheduled_at', '<=', now())
+            ->orderBy('scheduled_at')
+            ->each(function (Notification $notification) use (&$dispatched): void {
+                $this->markQueuedAndDispatch($notification);
+                $dispatched++;
+            });
+
+        return $dispatched;
+    }
+
+    /**
+     * A notification is due when it has no schedule or its schedule has elapsed.
+     */
+    private function isDue(Notification $notification): bool
+    {
+        return $notification->scheduled_at === null
+            || ! $notification->scheduled_at->isFuture();
+    }
+
+    /**
+     * Transition pending -> queued and dispatch the delivery job.
+     */
+    private function markQueuedAndDispatch(Notification $notification): void
+    {
+        $notification->update(['status' => Status::Queued]);
+        SendNotification::dispatch($notification);
+
+        // Request-side log; the correlation id (from Context) ties this to the
+        // worker's later delivery-attempt log.
+        Log::info('notification.queued', [
+            'notification_id' => $notification->id,
+            'channel' => $notification->channel->value,
+            'priority' => $notification->priority->value,
+        ]);
     }
 
     /**

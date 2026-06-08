@@ -12,8 +12,10 @@ endpoints:
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Liveness probe. Returns 200 when the application is up.'
-      description: ''
+      title: 'Health check'
+      description: |-
+        Probes database, Redis, and queue connectivity. Returns 200 when all
+        dependencies are reachable, or 503 when any is degraded.
       authenticated: false
       deprecated: false
     headers:
@@ -30,7 +32,53 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":"ok","service":"notifications"}'
+        content: '{"status":"ok","service":"notifications","checks":{"database":{"status":"ok","latency_ms":1.2}}}'
+        headers: []
+        description: Healthy
+      -
+        custom: []
+        status: 503
+        content: '{"status":"degraded","service":"notifications","checks":{"redis":{"status":"error","latency_ms":2001,"error":"Connection refused"}}}'
+        headers: []
+        description: Degraded
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/metrics
+    metadata:
+      custom: []
+      groupName: System
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: Metrics
+      description: |-
+        Operational metrics: queue depth per priority, success/failure counts
+        over a rolling window, throughput (sent/min), and delivery latency
+        percentiles (p50/p95/p99).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"window_minutes":5,"queue_depth":{"high":0,"normal":2,"low":10},"counts":{"sent":1200,"failed":3},"throughput_per_min":240.0,"latency_ms":{"p50":42,"p95":110,"p99":190}}'
         headers: []
         description: ''
     responseFields: []

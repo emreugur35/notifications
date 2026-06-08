@@ -15,12 +15,14 @@ use App\Models\Notification;
 use App\Support\Content\ContentValidationException;
 use App\Support\Content\ContentValidator;
 use App\Support\Idempotency\IdempotencyLock;
+use App\Support\Retry\Backoff;
 use DateTimeInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -66,10 +68,7 @@ class SendNotification implements ShouldQueue
      */
     public function backoff(): array
     {
-        return array_map(
-            fn (int $seconds): int => $seconds + random_int(0, (int) round($seconds * 0.2)),
-            [10, 30, 60, 120, 300],
-        );
+        return (new Backoff)->schedule();
     }
 
     /**
@@ -183,6 +182,18 @@ class SendNotification implements ShouldQueue
             'status' => $status,
             'response_code' => $responseCode,
             'error' => $error,
+            'latency_ms' => $latencyMs,
+        ]);
+
+        // Structured JSON log line. The correlation id propagated from the
+        // originating request (via Context) is auto-injected, so this provider
+        // attempt is traceable back to the request that created it.
+        Log::info('notification.delivery_attempt', [
+            'notification_id' => $notification->id,
+            'channel' => $notification->channel->value,
+            'attempt' => $attempt,
+            'status' => $status->value,
+            'response_code' => $responseCode,
             'latency_ms' => $latencyMs,
         ]);
 

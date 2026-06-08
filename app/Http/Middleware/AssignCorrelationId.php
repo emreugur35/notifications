@@ -6,14 +6,19 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Assigns a correlation id to every request: honours an inbound
- * X-Correlation-Id header or generates a UUID, exposes it on the request
- * (for resources), shares it with the logger, and echoes it on the response.
+ * X-Correlation-Id header or generates a UUID, exposes it on the request (for
+ * resources), and echoes it on the response.
+ *
+ * The id is published to Laravel's Context, which (a) auto-injects it into the
+ * "extra" of every structured log line and (b) is serialized into any queued
+ * job dispatched during the request and rehydrated when the job runs. That is
+ * how request → job → provider attempt all share one id.
  */
 class AssignCorrelationId
 {
@@ -26,10 +31,7 @@ class AssignCorrelationId
         $correlationId = $request->headers->get(self::HEADER) ?? (string) Str::uuid();
 
         $request->attributes->set(self::ATTRIBUTE, $correlationId);
-
-        // Ties into the structured JSON log channel so every log line emitted
-        // during this request carries the same correlation id.
-        Log::shareContext([self::ATTRIBUTE => $correlationId]);
+        Context::add(self::ATTRIBUTE, $correlationId);
 
         $response = $next($request);
         $response->headers->set(self::HEADER, $correlationId);

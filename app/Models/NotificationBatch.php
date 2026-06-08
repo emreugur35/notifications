@@ -34,6 +34,12 @@ class NotificationBatch extends Model
 
     use HasUuids;
 
+    protected $fillable = [
+        'name',
+        'total_count',
+        'pending_count',
+    ];
+
     protected $table = 'notification_batches';
 
     /** @var list<string> */

@@ -106,11 +106,11 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":[{"id":"019ea883-ef6f-704a-b6da-52f2b1c16b85","batch_id":null,"recipient":"user@example.com","channel":"email","content":"hi from curl","priority":"high","status":"pending","idempotency_key":null,"provider_message_id":null,"scheduled_at":null,"attempts":0,"metadata":[],"created_at":"2026-06-08T18:34:39+00:00","updated_at":"2026-06-08T18:34:39+00:00"}],"links":{"first":"http:\/\/localhost:8000\/api\/v1\/notifications?status=pending&channel=email&from=2026-01-01&to=2026-12-31&per_page=25&page=1","last":"http:\/\/localhost:8000\/api\/v1\/notifications?status=pending&channel=email&from=2026-01-01&to=2026-12-31&per_page=25&page=1","prev":null,"next":null},"meta":{"current_page":1,"from":1,"last_page":1,"links":[{"url":null,"label":"&laquo; Previous","page":null,"active":false},{"url":"http:\/\/localhost:8000\/api\/v1\/notifications?status=pending&channel=email&from=2026-01-01&to=2026-12-31&per_page=25&page=1","label":"1","page":1,"active":true},{"url":null,"label":"Next &raquo;","page":null,"active":false}],"path":"http:\/\/localhost:8000\/api\/v1\/notifications","per_page":25,"to":1,"total":1},"correlation_id":"b9d6a80d-91b5-4c1b-a37b-e4d4a471f945"}'
+        content: '{"data":[],"links":{"first":"http:\/\/localhost:8000\/api\/v1\/notifications?status=pending&channel=email&from=2026-01-01&to=2026-12-31&per_page=25&page=1","last":"http:\/\/localhost:8000\/api\/v1\/notifications?status=pending&channel=email&from=2026-01-01&to=2026-12-31&per_page=25&page=1","prev":null,"next":null},"meta":{"current_page":1,"from":null,"last_page":1,"links":[{"url":null,"label":"&laquo; Previous","page":null,"active":false},{"url":"http:\/\/localhost:8000\/api\/v1\/notifications?status=pending&channel=email&from=2026-01-01&to=2026-12-31&per_page=25&page=1","label":"1","page":1,"active":true},{"url":null,"label":"Next &raquo;","page":null,"active":false}],"path":"http:\/\/localhost:8000\/api\/v1\/notifications","per_page":25,"to":null,"total":0},"correlation_id":"cc784a36-7ba7-4174-93a9-4cf99940e9ff"}'
         headers:
           cache-control: 'no-cache, private'
           content-type: application/json
-          x-correlation-id: b9d6a80d-91b5-4c1b-a37b-e4d4a471f945
+          x-correlation-id: cc784a36-7ba7-4174-93a9-4cf99940e9ff
           access-control-allow-origin: '*'
         description: null
     responseFields: []
@@ -173,13 +173,35 @@ endpoints:
       content:
         custom: []
         name: content
-        description: 'Rendered notification body.'
+        description: 'Rendered notification body. Required for every channel. Must not be greater than 10000 characters.'
         required: true
         example: 'Your order has shipped.'
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
+        deprecated: false
+      subject:
+        custom: []
+        name: subject
+        description: 'Subject line. Required for the email channel. Must not be greater than 255 characters.'
+        required: false
+        example: 'Your order has shipped'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      title:
+        custom: []
+        name: title
+        description: 'Title. Required for the push channel. Must not be greater than 255 characters.'
+        required: false
+        example: 'Order update'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
         deprecated: false
       priority:
         custom: []
@@ -232,6 +254,8 @@ endpoints:
       recipient: user@example.com
       channel: email
       content: 'Your order has shipped.'
+      subject: 'Your order has shipped'
+      title: 'Order update'
       priority: normal
     fileParameters: []
     responses:
@@ -324,13 +348,35 @@ endpoints:
       'notifications[].content':
         custom: []
         name: 'notifications[].content'
-        description: 'Rendered notification body.'
+        description: 'Rendered notification body. Must not be greater than 10000 characters.'
         required: true
         example: 'Your order has shipped.'
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
+        deprecated: false
+      'notifications[].subject':
+        custom: []
+        name: 'notifications[].subject'
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: b
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'notifications[].title':
+        custom: []
+        name: 'notifications[].title'
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: 'n'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
         deprecated: false
       'notifications[].priority':
         custom: []
@@ -351,7 +397,7 @@ endpoints:
         name: 'notifications[].scheduled_at'
         description: 'Must be a valid date.'
         required: false
-        example: '2026-06-08T18:35:39'
+        example: '2026-06-08T19:40:36'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -362,7 +408,7 @@ endpoints:
         name: 'notifications[].idempotency_key'
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: b
+        example: g
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -386,9 +432,11 @@ endpoints:
           recipient: user@example.com
           channel: email
           content: 'Your order has shipped.'
+          subject: b
+          title: 'n'
           priority: normal
-          scheduled_at: '2026-06-08T18:35:39'
-          idempotency_key: b
+          scheduled_at: '2026-06-08T19:40:36'
+          idempotency_key: g
     fileParameters: []
     responses:
       -
@@ -428,7 +476,7 @@ endpoints:
         name: id
         description: 'The ID of the notification.'
         required: true
-        example: 019ea883-ef6f-704a-b6da-52f2b1c16b85
+        example: 019ea8bf-da39-72a0-8931-3b2d16638e11
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -446,7 +494,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 019ea883-ef6f-704a-b6da-52f2b1c16b85
+      id: 019ea8bf-da39-72a0-8931-3b2d16638e11
       notification: 9b1d...
     queryParameters: []
     cleanQueryParameters: []
@@ -457,11 +505,11 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":"019ea883-ef6f-704a-b6da-52f2b1c16b85","batch_id":null,"recipient":"user@example.com","channel":"email","content":"hi from curl","priority":"high","status":"pending","idempotency_key":null,"provider_message_id":null,"scheduled_at":null,"attempts":0,"metadata":[],"created_at":"2026-06-08T18:34:39+00:00","updated_at":"2026-06-08T18:34:39+00:00","delivery_attempts":[]},"correlation_id":"2bc125cd-d273-4051-92bf-2401bea3e7c5"}'
+        content: '{"data":{"id":"019ea8bf-da39-72a0-8931-3b2d16638e11","batch_id":null,"recipient":"+15551230000","channel":"sms","content":"trace me","priority":"high","status":"failed","idempotency_key":null,"provider_message_id":null,"scheduled_at":null,"attempts":1,"metadata":{"sms":{"length":8,"encoding":"GSM-7","segments":1,"per_segment":160}},"created_at":"2026-06-08T19:40:06+00:00","updated_at":"2026-06-08T19:40:08+00:00","delivery_attempts":[{"id":22,"attempt_number":1,"status":"failed","response_code":404,"response_body":null,"latency_ms":428,"error":"Provider returned permanent HTTP 404.","created_at":"2026-06-08T19:40:08+00:00"}]},"correlation_id":"a9c331e6-cb8d-469d-9609-2a0910258044"}'
         headers:
           cache-control: 'no-cache, private'
           content-type: application/json
-          x-correlation-id: 2bc125cd-d273-4051-92bf-2401bea3e7c5
+          x-correlation-id: a9c331e6-cb8d-469d-9609-2a0910258044
           access-control-allow-origin: '*'
         description: null
     responseFields: []
@@ -497,7 +545,7 @@ endpoints:
         name: notification_id
         description: 'The ID of the notification.'
         required: true
-        example: 019ea883-ef6f-704a-b6da-52f2b1c16b85
+        example: 019ea8bf-da39-72a0-8931-3b2d16638e11
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -515,7 +563,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      notification_id: 019ea883-ef6f-704a-b6da-52f2b1c16b85
+      notification_id: 019ea8bf-da39-72a0-8931-3b2d16638e11
       notification: 9b1d...
     queryParameters: []
     cleanQueryParameters: []

@@ -104,7 +104,10 @@
                 </li>
                                     <ul id="tocify-subheader-system" class="tocify-subheader">
                                                     <li class="tocify-item level-2" data-unique="system-GETapi-v1-health">
-                                <a href="#system-GETapi-v1-health">Liveness probe. Returns 200 when the application is up.</a>
+                                <a href="#system-GETapi-v1-health">Health check</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="system-GETapi-v1-metrics">
+                                <a href="#system-GETapi-v1-metrics">Metrics</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -354,29 +357,12 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-correlation-id: b9d6a80d-91b5-4c1b-a37b-e4d4a471f945
+x-correlation-id: cc784a36-7ba7-4174-93a9-4cf99940e9ff
 access-control-allow-origin: *
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
-    &quot;data&quot;: [
-        {
-            &quot;id&quot;: &quot;019ea883-ef6f-704a-b6da-52f2b1c16b85&quot;,
-            &quot;batch_id&quot;: null,
-            &quot;recipient&quot;: &quot;user@example.com&quot;,
-            &quot;channel&quot;: &quot;email&quot;,
-            &quot;content&quot;: &quot;hi from curl&quot;,
-            &quot;priority&quot;: &quot;high&quot;,
-            &quot;status&quot;: &quot;pending&quot;,
-            &quot;idempotency_key&quot;: null,
-            &quot;provider_message_id&quot;: null,
-            &quot;scheduled_at&quot;: null,
-            &quot;attempts&quot;: 0,
-            &quot;metadata&quot;: [],
-            &quot;created_at&quot;: &quot;2026-06-08T18:34:39+00:00&quot;,
-            &quot;updated_at&quot;: &quot;2026-06-08T18:34:39+00:00&quot;
-        }
-    ],
+    &quot;data&quot;: [],
     &quot;links&quot;: {
         &quot;first&quot;: &quot;http://localhost:8000/api/v1/notifications?status=pending&amp;channel=email&amp;from=2026-01-01&amp;to=2026-12-31&amp;per_page=25&amp;page=1&quot;,
         &quot;last&quot;: &quot;http://localhost:8000/api/v1/notifications?status=pending&amp;channel=email&amp;from=2026-01-01&amp;to=2026-12-31&amp;per_page=25&amp;page=1&quot;,
@@ -385,7 +371,7 @@ access-control-allow-origin: *
     },
     &quot;meta&quot;: {
         &quot;current_page&quot;: 1,
-        &quot;from&quot;: 1,
+        &quot;from&quot;: null,
         &quot;last_page&quot;: 1,
         &quot;links&quot;: [
             {
@@ -409,10 +395,10 @@ access-control-allow-origin: *
         ],
         &quot;path&quot;: &quot;http://localhost:8000/api/v1/notifications&quot;,
         &quot;per_page&quot;: 25,
-        &quot;to&quot;: 1,
-        &quot;total&quot;: 1
+        &quot;to&quot;: null,
+        &quot;total&quot;: 0
     },
-    &quot;correlation_id&quot;: &quot;b9d6a80d-91b5-4c1b-a37b-e4d4a471f945&quot;
+    &quot;correlation_id&quot;: &quot;cc784a36-7ba7-4174-93a9-4cf99940e9ff&quot;
 }</code>
  </pre>
     </span>
@@ -575,6 +561,8 @@ requests return the original notification instead of creating a duplicate.</p>
     \"recipient\": \"user@example.com\",
     \"channel\": \"email\",
     \"content\": \"Your order has shipped.\",
+    \"subject\": \"Your order has shipped\",
+    \"title\": \"Order update\",
     \"priority\": \"normal\"
 }"
 </code></pre></div>
@@ -594,6 +582,8 @@ let body = {
     "recipient": "user@example.com",
     "channel": "email",
     "content": "Your order has shipped.",
+    "subject": "Your order has shipped",
+    "title": "Order update",
     "priority": "normal"
 };
 
@@ -727,7 +717,31 @@ Must be one of:
                value="Your order has shipped."
                data-component="body">
     <br>
-<p>Rendered notification body. Example: <code>Your order has shipped.</code></p>
+<p>Rendered notification body. Required for every channel. Must not be greater than 10000 characters. Example: <code>Your order has shipped.</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>subject</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="subject"                data-endpoint="POSTapi-v1-notifications"
+               value="Your order has shipped"
+               data-component="body">
+    <br>
+<p>Subject line. Required for the email channel. Must not be greater than 255 characters. Example: <code>Your order has shipped</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>title</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="title"                data-endpoint="POSTapi-v1-notifications"
+               value="Order update"
+               data-component="body">
+    <br>
+<p>Title. Required for the push channel. Must not be greater than 255 characters. Example: <code>Order update</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>priority</code></b>&nbsp;&nbsp;
@@ -805,9 +819,11 @@ than 1000 notifications are rejected with a 422.</p>
             \"recipient\": \"user@example.com\",
             \"channel\": \"email\",
             \"content\": \"Your order has shipped.\",
+            \"subject\": \"b\",
+            \"title\": \"n\",
             \"priority\": \"normal\",
-            \"scheduled_at\": \"2026-06-08T18:35:39\",
-            \"idempotency_key\": \"b\"
+            \"scheduled_at\": \"2026-06-08T19:40:36\",
+            \"idempotency_key\": \"g\"
         }
     ]
 }"
@@ -831,9 +847,11 @@ let body = {
             "recipient": "user@example.com",
             "channel": "email",
             "content": "Your order has shipped.",
+            "subject": "b",
+            "title": "n",
             "priority": "normal",
-            "scheduled_at": "2026-06-08T18:35:39",
-            "idempotency_key": "b"
+            "scheduled_at": "2026-06-08T19:40:36",
+            "idempotency_key": "g"
         }
     ]
 };
@@ -993,7 +1011,31 @@ Must be one of:
                value="Your order has shipped."
                data-component="body">
     <br>
-<p>Rendered notification body. Example: <code>Your order has shipped.</code></p>
+<p>Rendered notification body. Must not be greater than 10000 characters. Example: <code>Your order has shipped.</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>subject</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="notifications.0.subject"                data-endpoint="POSTapi-v1-notifications-batch"
+               value="b"
+               data-component="body">
+    <br>
+<p>Must not be greater than 255 characters. Example: <code>b</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>title</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="notifications.0.title"                data-endpoint="POSTapi-v1-notifications-batch"
+               value="n"
+               data-component="body">
+    <br>
+<p>Must not be greater than 255 characters. Example: <code>n</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>priority</code></b>&nbsp;&nbsp;
@@ -1016,10 +1058,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="notifications.0.scheduled_at"                data-endpoint="POSTapi-v1-notifications-batch"
-               value="2026-06-08T18:35:39"
+               value="2026-06-08T19:40:36"
                data-component="body">
     <br>
-<p>Must be a valid date. Example: <code>2026-06-08T18:35:39</code></p>
+<p>Must be a valid date. Example: <code>2026-06-08T19:40:36</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>idempotency_key</code></b>&nbsp;&nbsp;
@@ -1028,10 +1070,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="notifications.0.idempotency_key"                data-endpoint="POSTapi-v1-notifications-batch"
-               value="b"
+               value="g"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>b</code></p>
+<p>Must not be greater than 255 characters. Example: <code>g</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>metadata</code></b>&nbsp;&nbsp;
@@ -1062,14 +1104,14 @@ Must be one of:
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost:8000/api/v1/notifications/019ea883-ef6f-704a-b6da-52f2b1c16b85" \
+    --get "http://localhost:8000/api/v1/notifications/019ea8bf-da39-72a0-8931-3b2d16638e11" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8000/api/v1/notifications/019ea883-ef6f-704a-b6da-52f2b1c16b85"
+    "http://localhost:8000/api/v1/notifications/019ea8bf-da39-72a0-8931-3b2d16638e11"
 );
 
 const headers = {
@@ -1095,29 +1137,47 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-correlation-id: 2bc125cd-d273-4051-92bf-2401bea3e7c5
+x-correlation-id: a9c331e6-cb8d-469d-9609-2a0910258044
 access-control-allow-origin: *
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
     &quot;data&quot;: {
-        &quot;id&quot;: &quot;019ea883-ef6f-704a-b6da-52f2b1c16b85&quot;,
+        &quot;id&quot;: &quot;019ea8bf-da39-72a0-8931-3b2d16638e11&quot;,
         &quot;batch_id&quot;: null,
-        &quot;recipient&quot;: &quot;user@example.com&quot;,
-        &quot;channel&quot;: &quot;email&quot;,
-        &quot;content&quot;: &quot;hi from curl&quot;,
+        &quot;recipient&quot;: &quot;+15551230000&quot;,
+        &quot;channel&quot;: &quot;sms&quot;,
+        &quot;content&quot;: &quot;trace me&quot;,
         &quot;priority&quot;: &quot;high&quot;,
-        &quot;status&quot;: &quot;pending&quot;,
+        &quot;status&quot;: &quot;failed&quot;,
         &quot;idempotency_key&quot;: null,
         &quot;provider_message_id&quot;: null,
         &quot;scheduled_at&quot;: null,
-        &quot;attempts&quot;: 0,
-        &quot;metadata&quot;: [],
-        &quot;created_at&quot;: &quot;2026-06-08T18:34:39+00:00&quot;,
-        &quot;updated_at&quot;: &quot;2026-06-08T18:34:39+00:00&quot;,
-        &quot;delivery_attempts&quot;: []
+        &quot;attempts&quot;: 1,
+        &quot;metadata&quot;: {
+            &quot;sms&quot;: {
+                &quot;length&quot;: 8,
+                &quot;encoding&quot;: &quot;GSM-7&quot;,
+                &quot;segments&quot;: 1,
+                &quot;per_segment&quot;: 160
+            }
+        },
+        &quot;created_at&quot;: &quot;2026-06-08T19:40:06+00:00&quot;,
+        &quot;updated_at&quot;: &quot;2026-06-08T19:40:08+00:00&quot;,
+        &quot;delivery_attempts&quot;: [
+            {
+                &quot;id&quot;: 22,
+                &quot;attempt_number&quot;: 1,
+                &quot;status&quot;: &quot;failed&quot;,
+                &quot;response_code&quot;: 404,
+                &quot;response_body&quot;: null,
+                &quot;latency_ms&quot;: 428,
+                &quot;error&quot;: &quot;Provider returned permanent HTTP 404.&quot;,
+                &quot;created_at&quot;: &quot;2026-06-08T19:40:08+00:00&quot;
+            }
+        ]
     },
-    &quot;correlation_id&quot;: &quot;2bc125cd-d273-4051-92bf-2401bea3e7c5&quot;
+    &quot;correlation_id&quot;: &quot;a9c331e6-cb8d-469d-9609-2a0910258044&quot;
 }</code>
  </pre>
     </span>
@@ -1200,10 +1260,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="id"                data-endpoint="GETapi-v1-notifications--id-"
-               value="019ea883-ef6f-704a-b6da-52f2b1c16b85"
+               value="019ea8bf-da39-72a0-8931-3b2d16638e11"
                data-component="url">
     <br>
-<p>The ID of the notification. Example: <code>019ea883-ef6f-704a-b6da-52f2b1c16b85</code></p>
+<p>The ID of the notification. Example: <code>019ea8bf-da39-72a0-8931-3b2d16638e11</code></p>
             </div>
                     <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>notification</code></b>&nbsp;&nbsp;
@@ -1233,14 +1293,14 @@ the pending or queued state may be cancelled; otherwise a 409 is returned.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost:8000/api/v1/notifications/019ea883-ef6f-704a-b6da-52f2b1c16b85/cancel" \
+    "http://localhost:8000/api/v1/notifications/019ea8bf-da39-72a0-8931-3b2d16638e11/cancel" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8000/api/v1/notifications/019ea883-ef6f-704a-b6da-52f2b1c16b85/cancel"
+    "http://localhost:8000/api/v1/notifications/019ea8bf-da39-72a0-8931-3b2d16638e11/cancel"
 );
 
 const headers = {
@@ -1346,10 +1406,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="notification_id"                data-endpoint="POSTapi-v1-notifications--notification_id--cancel"
-               value="019ea883-ef6f-704a-b6da-52f2b1c16b85"
+               value="019ea8bf-da39-72a0-8931-3b2d16638e11"
                data-component="url">
     <br>
-<p>The ID of the notification. Example: <code>019ea883-ef6f-704a-b6da-52f2b1c16b85</code></p>
+<p>The ID of the notification. Example: <code>019ea8bf-da39-72a0-8931-3b2d16638e11</code></p>
             </div>
                     <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>notification</code></b>&nbsp;&nbsp;
@@ -1369,12 +1429,13 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
     
 
-                                <h2 id="system-GETapi-v1-health">Liveness probe. Returns 200 when the application is up.</h2>
+                                <h2 id="system-GETapi-v1-health">Health check</h2>
 
 <p>
 </p>
 
-
+<p>Probes database, Redis, and queue connectivity. Returns 200 when all
+dependencies are reachable, or 503 when any is degraded.</p>
 
 <span id="example-requests-GETapi-v1-health">
 <blockquote>Example request:</blockquote>
@@ -1407,13 +1468,36 @@ fetch(url, {
 
 <span id="example-responses-GETapi-v1-health">
             <blockquote>
-            <p>Example response (200):</p>
+            <p>Example response (200, Healthy):</p>
         </blockquote>
                 <pre>
 
 <code class="language-json" style="max-height: 300px;">{
     &quot;status&quot;: &quot;ok&quot;,
-    &quot;service&quot;: &quot;notifications&quot;
+    &quot;service&quot;: &quot;notifications&quot;,
+    &quot;checks&quot;: {
+        &quot;database&quot;: {
+            &quot;status&quot;: &quot;ok&quot;,
+            &quot;latency_ms&quot;: 1.2
+        }
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (503, Degraded):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;status&quot;: &quot;degraded&quot;,
+    &quot;service&quot;: &quot;notifications&quot;,
+    &quot;checks&quot;: {
+        &quot;redis&quot;: {
+            &quot;status&quot;: &quot;error&quot;,
+            &quot;latency_ms&quot;: 2001,
+            &quot;error&quot;: &quot;Connection refused&quot;
+        }
+    }
 }</code>
  </pre>
     </span>
@@ -1483,6 +1567,143 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="GETapi-v1-health"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        </form>
+
+                    <h2 id="system-GETapi-v1-metrics">Metrics</h2>
+
+<p>
+</p>
+
+<p>Operational metrics: queue depth per priority, success/failure counts
+over a rolling window, throughput (sent/min), and delivery latency
+percentiles (p50/p95/p99).</p>
+
+<span id="example-requests-GETapi-v1-metrics">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8000/api/v1/metrics" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/metrics"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-metrics">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;window_minutes&quot;: 5,
+    &quot;queue_depth&quot;: {
+        &quot;high&quot;: 0,
+        &quot;normal&quot;: 2,
+        &quot;low&quot;: 10
+    },
+    &quot;counts&quot;: {
+        &quot;sent&quot;: 1200,
+        &quot;failed&quot;: 3
+    },
+    &quot;throughput_per_min&quot;: 240,
+    &quot;latency_ms&quot;: {
+        &quot;p50&quot;: 42,
+        &quot;p95&quot;: 110,
+        &quot;p99&quot;: 190
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-metrics" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-metrics"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-metrics"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-metrics" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-metrics">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-metrics" data-method="GET"
+      data-path="api/v1/metrics"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-metrics', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-metrics"
+                    onclick="tryItOut('GETapi-v1-metrics');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-metrics"
+                    onclick="cancelTryOut('GETapi-v1-metrics');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-metrics"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/metrics</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-metrics"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-metrics"
                value="application/json"
                data-component="header">
     <br>
