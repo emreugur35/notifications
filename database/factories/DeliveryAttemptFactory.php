@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use Domain\Notifications\Enums\Status;
-use Domain\Notifications\Models\DeliveryAttempt;
-use Domain\Notifications\Models\Notification;
+use App\Enums\Status;
+use App\Models\DeliveryAttempt;
+use App\Models\Notification;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

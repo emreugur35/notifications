@@ -197,16 +197,21 @@ return [
     */
 
     'defaults' => [
-        'supervisor-1' => [
+        // A single pool consumes the three priority queues in strict order:
+        // a worker only pulls from a lower-priority queue when every
+        // higher-priority queue is empty, so high-priority traffic always
+        // drains before normal, and normal before low. `balance: off` is
+        // required for this — `auto`/`simple` split processes across queues
+        // and lose the ordering.
+        'supervisor-notifications' => [
             'connection' => 'redis',
-            'queue' => ['default'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'maxProcesses' => 1,
+            'queue' => ['notifications-high', 'notifications-normal', 'notifications-low'],
+            'balance' => 'off',
+            'maxProcesses' => 3,
             'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 128,
-            'tries' => 1,
+            'tries' => 3,
             'timeout' => 60,
             'nice' => 0,
         ],
@@ -214,15 +219,13 @@ return [
 
     'environments' => [
         'production' => [
-            'supervisor-1' => [
-                'maxProcesses' => 10,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
+            'supervisor-notifications' => [
+                'maxProcesses' => 12,
             ],
         ],
 
         'local' => [
-            'supervisor-1' => [
+            'supervisor-notifications' => [
                 'maxProcesses' => 3,
             ],
         ],

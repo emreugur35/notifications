@@ -1,7 +1,11 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\HorizonServiceProvider;
+use App\Providers\NotificationsServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\HorizonServiceProvider::class,
-    Domain\Notifications\Providers\NotificationsServiceProvider::class,
+    AppServiceProvider::class,
+    HorizonServiceProvider::class,
+    NotificationsServiceProvider::class,
 ];

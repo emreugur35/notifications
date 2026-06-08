@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use Domain\Notifications\Enums\Channel;
-use Domain\Notifications\Models\Template;
+use App\Enums\Channel;
+use App\Models\Template;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

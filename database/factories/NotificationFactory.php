@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use Domain\Notifications\Enums\Channel;
-use Domain\Notifications\Enums\Priority;
-use Domain\Notifications\Enums\Status;
-use Domain\Notifications\Models\Notification;
-use Domain\Notifications\Models\NotificationBatch;
+use App\Enums\Channel;
+use App\Enums\Priority;
+use App\Enums\Status;
+use App\Models\Notification;
+use App\Models\NotificationBatch;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use Domain\Notifications\Models\NotificationBatch;
+use App\Models\NotificationBatch;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

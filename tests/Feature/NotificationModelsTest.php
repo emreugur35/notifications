@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use Domain\Notifications\Enums\Channel;
-use Domain\Notifications\Enums\Status;
-use Domain\Notifications\Models\DeliveryAttempt;
-use Domain\Notifications\Models\Notification;
-use Domain\Notifications\Models\NotificationBatch;
-use Domain\Notifications\Models\Template;
+use App\Enums\Channel;
+use App\Enums\Status;
+use App\Models\DeliveryAttempt;
+use App\Models\Notification;
+use App\Models\NotificationBatch;
+use App\Models\Template;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
