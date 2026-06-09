@@ -1,4 +1,4 @@
-# Notifications Service
+# Notifications Service Case
 
 A queue-backed, multi-channel (SMS / email / push) notification delivery service built on **Laravel 13 + Horizon + Redis + PostgreSQL**. It exposes a versioned REST API, dispatches delivery onto per-priority queues, enforces per-channel rate limiting and a per-channel circuit breaker, retries transient provider failures with jittered backoff, and records every delivery attempt. Operational endpoints (`/health`, `/metrics`) and structured JSON logs with end-to-end correlation ids round it out.
 
